@@ -1,0 +1,121 @@
+# Based on:
+# https://github.com/mikepurvis/ros-system-daemon/blob/master/debian/ros-system-daemon.ros.logrotate
+
+# logrotate cannot read environment variables, so we need to hardcode paths. Please substitute your own paths.
+# unless you want to do something like this: https://stackoverflow.com/a/4417165/3363527
+
+/var/log/ros/latest/*.log {
+
+    # Run scripts once per set of logs
+    sharedscripts
+
+    # runs logrotate as root. May be necessary to you.
+    # su root root
+
+    # runs before anything, but after checking which files need to be rotated
+    firstaction
+        # sources ROS so we have rosparam on this terminal ROS VERSION ALSO HARDCODED HERE
+        . /opt/ros/indigo/setup.sh
+
+        # get run_id of ROS if it is running, returns empty if not running
+        RUN_ID=`rosparam get /run_id 2>/dev/null`
+
+        # Create a tarball if ROS is no longer using a given log subdirectory
+        cd /var/log/ros
+        for i in $( ls /var/log/ros | grep -v \.gz$ ); do
+
+            # if ROS is not running, will compress all files
+            if [ $i != "$RUN_ID" ] || [ ! "$RUN_ID" ] ; then
+                if [ -d $i ] && [ "$i" != "latest" ] ; then # keeps the latest folder
+                    # will compress old folders
+                    tar -zpcf $i.tar.gz $i
+                fi
+            fi
+        done
+    endscript
+
+    # runs after everything
+    lastaction
+        . /opt/ros/indigo/setup.sh
+        RUN_ID=`rosparam get /run_id 2>/dev/null`
+        # Remove log subdirectory after tarball has been created
+        for i in $( ls /var/log/ros | grep -v \.gz$ ); do
+            if [ $i != "$RUN_ID" ] && [ -e /var/log/ros/$i.tar.gz ]; then
+                # removes old directories
+                rm -r /var/log/ros/$i
+            fi
+        done
+
+        # Delete tarballs after a week
+        for i in $( find /var/log/ros -mtime 7 | grep \.gz$ ); do
+            rm /var/log/ros/$i
+        done
+
+    endscript
+
+    # Do not report errors if ROS has not created logs
+    missingok
+
+    # Rotate logs daily
+    daily
+
+    # Do not rotate the file if empty
+    notifempty
+
+    # Keep 1 week worth of logs for active processes
+    rotate 7
+
+    # Won't close current file, will create a new file for rotation instead
+    copytruncate
+
+    # will compress .log files
+    compress
+}
+
+
+# will rotate rostopic log files on ROS_LOG_DIR folder
+# when you call some ROS tools using command line (like rostopic pub or rosservice call), ROS generates a log file
+# on ROS_LOG_DIR. These files never get deleted by ROS and they have an unique identifier, so they might never be 
+# used again if you run a command twice. Thus, this command rotates log files that are in use and will delete 
+# files that have not been modified on last 7 days
+/var/log/ros/*.log {
+
+    # Run scripts once per set of logs
+    sharedscripts
+
+    # runs logrotate as root
+    su root root
+
+    # runs after everything
+    lastaction
+        cd /var/log/ros
+        # Delete files that have not been modified in a week
+        for i in $( find /var/log/ros -ctime 7 | grep \.log$ ); do
+            rm /var/log/ros/$i
+        done
+
+        # Delete files older than a week
+        for i in $( find /var/log/ros -mtime 7 | grep \.gz$ ); do
+            rm /var/log/ros/$i
+        done
+
+    endscript
+
+    # Do not report errors if ROS has not created logs
+    missingok
+
+    # Do not rotate the file if empty
+    notifempty
+
+    # Rotate logs daily
+    daily
+
+    # Keep 1 week worth of logs for active processes
+    rotate 7
+
+    # Won't close current file, will create a new file for rotation instead
+    copytruncate
+
+    # will compress .log files
+    compress
+}
