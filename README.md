@@ -6,14 +6,14 @@ This logrotate script allows you to control the size of your log files and make 
 
 # Usage 
 
-Install logrotate, if you don have it. Most of Linux distribuitions come with it by default, but you can install it by running:
+Install logrotate, if you don't have it. Most of Linux distribuitions come with it by default, but you can install it by running:
 
 ```
 sudo apt-get install logrotate
 ```
 Make sure also you have cron installed if you want this logrotate script to run regularly.
 
-Then, drop this file at /etc/logrotate.d. Everything should work fine now.
+Then, please read the logrotate_ros file. It has some comments and you might need to change some stuff yourself. After doing your changes, drop this file at /etc/logrotate.d. Everything should work fine now.
 
 # Problems?
 
