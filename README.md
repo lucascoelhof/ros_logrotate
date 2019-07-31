@@ -13,7 +13,7 @@ sudo apt-get install logrotate
 ```
 Make sure also you have cron installed if you want this logrotate script to run regularly.
 
-Then, please read the logrotate_ros file. It has some comments and you might need to change some stuff yourself. After doing your changes, drop this file at /etc/logrotate.d. Everything should work fine now.
+Then, please read the [logrotate_ros](logrotate_ros) file. It has some comments and you might need to change some stuff yourself. After doing your changes, drop this file at /etc/logrotate.d. Everything should work fine now.
 
 # Problems?
 
